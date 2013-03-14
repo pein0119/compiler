@@ -19,8 +19,22 @@ void ch_error()
 {
     printf("文件中存在非法字符\n");
 }
+
 void error_handle(int error_number)
 {
+    switch(error_number)
+    {
+    case file_exist_error:
+        open_file_error();
+        break;
 
+    case illegal_ch_error:
+        ch_error();
+        break;
+
+    default:
+        break;
+    }
 }
+
 #endif

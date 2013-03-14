@@ -36,7 +36,7 @@ void print_word(char* token)
     int key;
     key = searchHash(token, HashTable);
 
-    if( key != -1 && (strcmp(HashTable[key].str, token) == 0) )
+    if( key != -1 )
     {
         // 是关键字
         toUp(token);                    // 将小写字母转换为大写字母
@@ -119,12 +119,16 @@ int main(int argc, char *argv[])
         length = strlen(buffer);
         end = buffer + length;
 
-        while(forward != end)
+        while(forward < end)
         {
             begin = forward;
             ch = *forward;
-            if( check_ch(ch) )
+            if( check_ch(ch)==0 )
+            {
                 error_handle(illegal_ch_error);
+                ++forward;
+                continue;
+            }
 
             if((ch == TAB || ch == NEWLINE || ch == SPACE))
             {
@@ -137,14 +141,19 @@ int main(int argc, char *argv[])
                 ++forward;
                 ch = *forward;
 
-                if( check_ch(ch) )
-                error_handle(illegal_ch_error);
+                if( check_ch(ch) ==0)
+                {
+                    error_handle(illegal_ch_error);
+                    --forward;
+                    copytoken(begin,forward);
+                    ++forward;
+                    print_word(token);
+                    continue;
+                }
 
                 while(isalnum(ch)&&(++forward != end))
                 {
                     ch = *forward;
-                    if( check_ch(ch) )
-                        error_handle(illegal_ch_error);
                 }
 
                 --forward;
@@ -156,13 +165,14 @@ int main(int argc, char *argv[])
             {
                 ++forward;
                 ch = *forward;
-                if( check_ch(ch) )
+                if(check_ch(ch)==0)
+                {
                     error_handle(illegal_ch_error);
-
+                }
                 while(isdigit(ch)&&(++forward != end))
                 {
                     ch = *forward;
-                    if( check_ch(ch) )
+                    if( check_ch(ch) == 0)
                         error_handle(illegal_ch_error);
                 }
 
@@ -178,8 +188,13 @@ int main(int argc, char *argv[])
                 case '*':
                     ++forward;
                     ch = *forward;
-                    if( check_ch(ch) )
+                    if( check_ch(ch)==0 )
+                    {
                         error_handle(illegal_ch_error);
+                        ++forward;
+                        printf("(MULTI,0)\n");
+                        break;
+                    }
 
                     if(ch == '*')
                         printf("(EXP,0)\n");
@@ -193,8 +208,13 @@ int main(int argc, char *argv[])
                 case ':':
                     ++forward;
                     ch = *forward;
-                    if( check_ch(ch) )
+                    if( check_ch(ch)==0 )
+                    {
                         error_handle(illegal_ch_error);
+                        ++forward;
+                        printf("(COLON,0)\n");
+                        break;
+                    }
 
                     if(ch == '=')
                         printf("(ASSIGN,0)\n");
@@ -208,8 +228,15 @@ int main(int argc, char *argv[])
                 case '<':
                     ++forward;
                     ch = *forward;
-                    if( check_ch(ch) )
+
+                    if( check_ch(ch)==0 )
+                    {
                         error_handle(illegal_ch_error);
+                        ++forward;
+                        printf("(LT,0)\n");
+                        break;
+                    }
+
 
                     if(ch == '=')
                     {
@@ -233,8 +260,13 @@ int main(int argc, char *argv[])
                 case '>':
                     ++forward;
                     ch = *forward;
-                    if( check_ch(ch) )
+                    if( check_ch(ch)==0 )
+                    {
                         error_handle(illegal_ch_error);
+                        ++forward;
+                        printf("(GT,0)\n");
+                        break;
+                    }
 
                     if(ch == '=')
                         printf("(GE,0)\n\n");

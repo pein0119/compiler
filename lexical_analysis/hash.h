@@ -20,6 +20,26 @@ int createHash(const char* str, keyword* HashTable)
 {
     unsigned int i, key, step;
     //
+    i =  key = 0;
+    step = 11;                          // 随便选的一个值
+
+    unsigned int length = strlen(str);
+    // 需要存入哈希表的字符串
+
+    for(i = 0; i < length; ++i)
+        key += str[i];
+    // 将每个字符的ascii码值相加
+
+    key %= HASH_LENGTH;                          // 取字符相加之和模37（小于40的最小质数）作为哈兮函数
+
+    while(1)
+    {
+        if(HashTable[key].flag == 0)
+        {
+            HashTable[key].flag =1;
+            strcpy(HashTable[key].str, str);
+            return key;
+        }
         else
         {
             key = (key + step) % HASH_LENGTH;
