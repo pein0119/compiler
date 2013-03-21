@@ -19,7 +19,6 @@ typedef struct
 int createHash(const char* str, keyword* HashTable)
 {
     unsigned int i, key, step;
-    //
     i =  key = 0;
     step = 11;                          // 随便选的一个值
 

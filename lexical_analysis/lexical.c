@@ -2,25 +2,29 @@
 #include <ctype.h>
 #include <string.h>
 #include "micro.h"
-#include "lexical_error.h"
+#include "error.h"
 #include "hash.h"
+#include "stack.h"
 
 keyword HashTable[HASH_LENGTH];         // 建立存储关键字的哈希表
 keyword IdTable[ID_TABLE_LENGTH];       // 建立存储标识符的哈希表
 
 
 inline
-int check_ch(char ch)
+int check_ch(char ch)                   // 判定字符是否为非法字符
 {
     if((ch >= 'A'&& ch <= 'Z') || (ch >= 'a' && ch <= 'z') ||
-       (ch >= '0'&& ch <= '9') || (ch == '+') || (ch == '-')
-       ||ch == '*'|| ch =='/' || ch == '=' || ch == '>' || ch == '<'
-        || ch == '(' || ch == ')' || ch == '[' || ch == ']'||
+       (ch >= '0'&& ch <= '9') || (ch == '+') || (ch == '-')||
+       ch == '*'|| ch =='/' || ch == '=' || ch == '>' || ch == '<'||
+       ch == '(' || ch == ')' || ch == '[' || ch == ']'||
        ch == ':' || ch == '\'' || ch == '.' || ch == '^' || ch == ','||
-        ch == '{' || ch == '}' || ch == TAB || ch == NEWLINE || ch == SPACE )
+       ch == '{' || ch == '}' || ch == TAB || ch == NEWLINE ||
+       ch == SPACE || ch == '\0' || ch == ';' || ch == '!')
         return 1;
     return 0;
 }
+
+
 void toUp(char* token)                  // 转换为大写字母
 {
     unsigned int length = strlen(token),i;
@@ -29,6 +33,8 @@ void toUp(char* token)                  // 转换为大写字母
         token[i] = toupper(token[i]);
 
 }
+
+
 // 输出关键字和标识符的函数
 void print_word(char* token)
 {
@@ -52,11 +58,20 @@ void print_word(char* token)
         printf("(ID,%d)\n",key);    // 输出该标识符在哈希表中的位置
     }
 }
-//输出各个进制的数字
+
+
+//输出各个进制的数字,目前只能支持十进制
 
 void print_digit(char* token)
 {
     printf("(INT,%s)\n",token);
+}
+
+// 输出字符串
+inline
+void print_str(char* token)
+{
+    printf("(STRING,%s)\n",token);
 }
 
 static char token[20];
@@ -65,6 +80,12 @@ void copytoken(char* begin, char* forward)
     int count = 0;
     while(begin <= forward)
     {
+        if(!check_ch(*begin))
+        {
+            ++begin;
+            continue;
+        }
+
         token[count++] = *begin;
         ++begin;
     }
@@ -113,11 +134,14 @@ int main(int argc, char *argv[])
     char *begin,*forward;
     int length;
     char *end;
+
+
     while(!feof(fin))
-   {
+    {
         begin = forward = buffer;
         length = strlen(buffer);
         end = buffer + length;
+        row = 1;                        // 记录当前的列号
 
         while(forward < end)
         {
@@ -127,58 +151,66 @@ int main(int argc, char *argv[])
             {
                 error_handle(illegal_ch_error);
                 ++forward;
+                ++row;                  // 移到下一列
                 continue;
             }
 
             if((ch == TAB || ch == NEWLINE || ch == SPACE))
             {
                 ++forward;
+                ++row;
                 begin = forward;
                 continue;
             }
             if(isalpha(ch))
             {
                 ++forward;
+                ++row;
                 ch = *forward;
 
-                if( check_ch(ch) ==0)
-                {
-                    error_handle(illegal_ch_error);
-                    --forward;
-                    copytoken(begin,forward);
-                    ++forward;
-                    print_word(token);
-                    continue;
-                }
+                // if( check_ch(ch) ==0)
+                // {
+                //     error_handle(illegal_ch_error);
+                //     --forward;
+                //     copytoken(begin,forward);
+                //     ++forward;
+                //     print_word(token);
+                //     continue;
+                // }
 
-                while(isalnum(ch)&&(++forward != end))
+                while(isalnum(ch)&&(++row, ++forward != end))
                 {
                     ch = *forward;
                 }
 
                 --forward;
+                --row;
                 copytoken(begin,forward);
                 ++forward;
+                ++row;
                 print_word(token);
             }
             else if(isdigit(ch))
             {
                 ++forward;
+                ++row;
                 ch = *forward;
-                if(check_ch(ch)==0)
-                {
-                    error_handle(illegal_ch_error);
-                }
-                while(isdigit(ch)&&(++forward != end))
+                // if(check_ch(ch)==0)
+                // {
+                //     error_handle(illegal_ch_error);
+                // }
+                while(isdigit(ch)&&(++row, ++forward != end))
                 {
                     ch = *forward;
-                    if( check_ch(ch) == 0)
-                        error_handle(illegal_ch_error);
+                    // if( check_ch(ch) == 0)
+                    //     error_handle(illegal_ch_error);
                 }
 
                 --forward;
+                --row;
                 copytoken(begin,forward);
                 ++forward;
+                ++row;
                 print_digit(token);
             }
             else
@@ -187,11 +219,12 @@ int main(int argc, char *argv[])
                 {
                 case '*':
                     ++forward;
+                    ++row;
                     ch = *forward;
                     if( check_ch(ch)==0 )
                     {
-                        error_handle(illegal_ch_error);
-                        ++forward;
+                        // error_handle(illegal_ch_error);
+                        // ++forward;
                         printf("(MULTI,0)\n");
                         break;
                     }
@@ -201,17 +234,20 @@ int main(int argc, char *argv[])
                     else
                     {
                         --forward;
+                        --row;
                         printf("(MULTI,0)\n");
                     }
                     ++forward;
+                    ++row;
                     break;
                 case ':':
                     ++forward;
+                    ++row;
                     ch = *forward;
                     if( check_ch(ch)==0 )
                     {
-                        error_handle(illegal_ch_error);
-                        ++forward;
+                        // error_handle(illegal_ch_error);
+                        // ++forward;
                         printf("(COLON,0)\n");
                         break;
                     }
@@ -221,18 +257,21 @@ int main(int argc, char *argv[])
                     else
                     {
                         --forward;
+                        --row;
                         printf("(COLON,0)\n");
                     }
                     ++forward;
+                    ++row;
                     break;
                 case '<':
                     ++forward;
+                    ++row;
                     ch = *forward;
 
                     if( check_ch(ch)==0 )
                     {
-                        error_handle(illegal_ch_error);
-                        ++forward;
+                        // error_handle(illegal_ch_error);
+                        // ++forward;
                         printf("(LT,0)\n");
                         break;
                     }
@@ -249,21 +288,25 @@ int main(int argc, char *argv[])
                     else
                     {
                         --forward;
+                        --row;
                         printf("(LT,0)\n");
                     }
                     ++forward;
+                    ++row;
                     break;
                 case '=':
                     printf("(EQ,0)\n");
                     ++forward;
+                    ++row;
                     break;
                 case '>':
                     ++forward;
+                    ++row;
                     ch = *forward;
                     if( check_ch(ch)==0 )
                     {
-                        error_handle(illegal_ch_error);
-                        ++forward;
+                        // error_handle(illegal_ch_error);
+                        // ++forward;
                         printf("(GT,0)\n");
                         break;
                     }
@@ -273,57 +316,108 @@ int main(int argc, char *argv[])
                     else
                     {
                         --forward;
-                        printf("(GT,0)\n");
+                        --row;
+                         printf("(GT,0)\n");
                     }
                     ++forward;
+                    ++row;
                     break;
                 case '+':
                     printf("(PLUS,0)\n");
                     ++forward;
+                    ++row;
                     break;
                 case '-':
                     printf("(MINUS,0)\n");
                     ++forward;
+                    ++row;
                     break;
                 case '/':
                     printf("(REIV,0)\n");
                     ++forward;
+                    ++row;
                     break;
                 case ',':
                     printf("(COMMA,0)\n");
                     ++forward;
+                    ++row;
                     break;
                 case ';':
                     printf("(SEMIC,0)\n");
                     ++forward;
+                    ++row;
                     break;
                 case '(':
                     printf("(LR_BRAC,0)\n");
+                    int flag = 0; // 用于判断括号是否匹配
+                    char* temp;
+                    temp = forward;
+                    while(++temp != end)
+                    {
+                        if(ch == '(')
+                            ++flag;
+                        else if(ch == ')')
+                            --flag;
+                        if(flag < 0)
+                            break;
+
+                        ch = *temp;
+                    }
+                    if(flag != 0)
+                        error_handle(par_not_match);
                     ++forward;
+                    ++row;
                     break;
                 case ')':
                     printf("(RR_BRAC,0)\n");
                     ++forward;
+                    ++row;
                     break;
                 case '[':
                     printf("(LS_BRAC,0)\n");
                     ++forward;
+                    ++row;
                     break;
                 case ']':
                     printf("(RS_BRAC,0)\n");
                     ++forward;
+                    ++row;
                     break;
                 case '\'':
-                    printf("(Q_MARK,0)\n");
+                    // printf("(Q_MARK,0)\n");
                     ++forward;
+                    ++row;
+                    ch = *forward;
+
+                    while(ch != '\''&& (++row, ++forward != end))
+                    {
+                        ch = *forward;
+                        if(!check_ch(ch))
+                            error_handle(illegal_ch_error);
+                        // ++forward;
+                    }
+                    // --forward;
+                    if(ch == '\'')
+                    {
+                        copytoken(begin, forward); // 输出字符串
+                        print_str(token);
+                    }
+                    else if(forward == end)
+                    {
+                        error_handle(quo_not_match); // 引号不匹配
+                    }
+                    ++forward;
+                    ++row;
                     break;
                 case '.':
                     printf("(F_STOP,0)\n");
                     ++forward;
+                    ++row;
                     break;
                 case '^':
                     printf("(CAP,0)\n");
                     ++forward;
+                    ++row;
                     break;
                 default:
                     // error_handle();
@@ -333,6 +427,7 @@ int main(int argc, char *argv[])
         }
         // 再从文件中读入一行数据
         buffer = fgets(str,100,fin);
+        ++line;
     }
     //关闭源程序和结果文件
     fclose(fin);

@@ -77,4 +77,7 @@ int error;
 
 #define file_exist_error       1         // 没有输入文件
 #define illegal_ch_error       2         // 存在非法字符
+#define par_not_match          3         // 括号不匹配
+#define quo_not_match          4         // 引号不匹配
+
 #endif
