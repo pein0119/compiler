@@ -46,7 +46,7 @@ STATUS InitStack(Stack* s)
 // 压栈操作
 STATUS Push(Stack* s, Item* i)
 {
-    if(++s->top == s->item + STACK_MAX_SIZE)
+    if((++s->top) == s->item + STACK_MAX_SIZE)
     {
         --s->top;
         return OVERFLOW;                // 存储的元素超过了栈的最大存储容量,上溢
@@ -78,6 +78,16 @@ STATUS IsEmpty(Stack* s)
         return EMPTY;
 
     return NOT_EMPTY;
+}
+
+// 打印栈中元素
+
+void PrintStack(Stack* s)
+{
+    Item *temp;
+    for(temp = s->base+1; temp <= s->top; ++temp)
+        printf("%d", *temp);
+    // printf("\n");
 }
 
 #endif
