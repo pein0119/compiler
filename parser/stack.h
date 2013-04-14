@@ -28,7 +28,6 @@
 //     int X;                              // 文法符号
 // }Item;
 typedef int Item;
-
 typedef struct
 {
     Item item[STACK_MAX_SIZE];          // 为栈开辟存储空间
@@ -71,6 +70,7 @@ Item* GetTop(Stack* s)
     return s->top;
 }
 
+
 // 判断栈是否为空
 STATUS IsEmpty(Stack* s)
 {
@@ -89,5 +89,6 @@ void PrintStack(Stack* s)
         printf("%d", *temp);
     // printf("\n");
 }
+
 
 #endif
